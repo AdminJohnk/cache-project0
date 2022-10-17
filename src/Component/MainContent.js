@@ -224,7 +224,7 @@ export default class MainContent extends Component {
    let cacheMemoryLine = new CacheMemoryLine(i, 0, 0, '-', 0);
    array.push(cacheMemoryLine);
   }
-  this.cacheMemory = new CacheMemory(soDong, array, 0, 'none');
+  this.cacheMemory = new CacheMemory(soDong, array, 0);
   // console.log(this.cacheMemory);
  }
 
@@ -403,12 +403,9 @@ export default class MainContent extends Component {
   let soLanNext = 0;
   let Miss_or_Hit = true;
 
+
   this.createMainMemory();
   this.createCacheMemory();
-
-  console.log(cache_index);
-  console.log(PAaddress);
-  console.log(Tag_bits);
 
   return (
    <div className='container-fluid'>
@@ -512,10 +509,14 @@ export default class MainContent extends Component {
            return;
           }
 
-          // Lấy dòng trùng với cache index đang chọn
+          // Lấy dòng trùng với cache index đang chọn trên giao diện
           let data_ = this.PA_address.index;
           data_ = Number(data_).toString(10).toString(2);
           let current_row = getID(data_);
+
+          // Đánh dấu dòng nào đang chọn trong bộ nhớ cache_
+          let decimal = Number(parseInt(data_, 2));
+          this.cacheMemory.currentIndex = decimal;
 
           // 4 cột trong cache table
           let valid = current_row.querySelector('#Valid');
@@ -523,6 +524,9 @@ export default class MainContent extends Component {
           let index = current_row.querySelector('#Index');
           let data = current_row.querySelector('#Data');
           let dirty = current_row.querySelector('#Dirty');
+
+
+
 
           if (soLanNext === 0) {
            // Set màu cho bảng nhỏ
@@ -550,9 +554,20 @@ export default class MainContent extends Component {
 
           if (soLanNext === 1) {
            valid.style.backgroundColor = '#29b5f6a8';
-           if (valid.innerHTML === '0') {
+           // if (valid.innerHTML === '0') {
+           //  valid.classList.add('current_row_close');
+           //  Miss_or_Hit = false;
+           //  // Information
+           //  getID('information_text').innerHTML = 'This line contains no data';
+           // } else {
+           //  valid.classList.add('current_row_tick');
+           //  // Information
+           //  getID('information_text').innerHTML = 'This line already contains data';
+           // }
+
+           // cache_
+           if (this.cacheMemory.Array[this.cacheMemory.currentIndex].valid === 0) {
             valid.classList.add('current_row_close');
-            Miss_or_Hit = false;
             // Information
             getID('information_text').innerHTML = 'This line contains no data';
            } else {
@@ -560,6 +575,9 @@ export default class MainContent extends Component {
             // Information
             getID('information_text').innerHTML = 'This line already contains data';
            }
+
+
+
 
            // Information
            getID('information_text').style.backgroundColor = '#29b5f6a8';
@@ -570,9 +588,20 @@ export default class MainContent extends Component {
           if (soLanNext === 2) {
            tag.style.backgroundColor = '#29b5f6a8';
            getID('caption__tag').style.backgroundColor = '#29b5f6a8';
-           if (tag.innerHTML === '-' || tag.innerHTML !== getID('caption__tag').innerHTML) {
+           // if (tag.innerHTML === '-' || tag.innerHTML !== getID('caption__tag').innerHTML) {
+           //  tag.classList.add('current_row_close');
+           //  Miss_or_Hit = false;
+           //  // Information
+           //  getID('information_text').innerHTML = 'This line does not match the tag';
+           // } else {
+           //  tag.classList.add('current_row_tick');
+           //  // Information
+           //  getID('information_text').innerHTML = 'This line match the tag';
+           // }
+
+           // cache_
+           if (this.cacheMemory.Array[this.cacheMemory.currentIndex].tagbit !== getID('caption__tag').innerHTML) {
             tag.classList.add('current_row_close');
-            Miss_or_Hit = false;
             // Information
             getID('information_text').innerHTML = 'This line does not match the tag';
            } else {
@@ -580,10 +609,13 @@ export default class MainContent extends Component {
             // Information
             getID('information_text').innerHTML = 'This line match the tag';
            }
+
            soLanNext++;
            return;
           }
           if (soLanNext === 3) {
+           // cache_
+           Miss_or_Hit = this.cacheMemory.missOrHit(getID('caption__tag').innerHTML);
            if (!Miss_or_Hit) {
             index.classList.add('Miss_After');
             // Information
@@ -619,16 +651,32 @@ export default class MainContent extends Component {
            let decimo_string = parseInt(binary_string, 2);
 
 
-           // Set nội dung cho ô data
-           let xblock = Math.pow(2, this.state.offset_bits);
-           data.innerHTML = `BLOCK ${decimo_string} WORD 0 - ${xblock - 1}`;
+
 
            // Set nội dung cho ô tag và valid
-           tag.innerHTML = getID('caption__tag').innerHTML;
-           valid.innerHTML = '1';
+           // tag.innerHTML = getID('caption__tag').innerHTML;
+           // valid.innerHTML = '1';
+
+           // cache_
+           this.cacheMemory.Array[this.cacheMemory.currentIndex].valid = 1;
+           this.cacheMemory.Array[this.cacheMemory.currentIndex].tagbit = getID('caption__tag').innerHTML;
+           tag.innerHTML = this.cacheMemory.Array[this.cacheMemory.currentIndex].tagbit;
+           valid.innerHTML = this.cacheMemory.Array[this.cacheMemory.currentIndex].valid;
+
+
+
+           // Set nội dung cho ô data
+           // let xblock = Math.pow(2, this.state.offset_bits);
+           // data.innerHTML = `BLOCK ${decimo_string} WORD 0 - ${xblock - 1}`;
+
+           // cache_ 
+           let xblock = Math.pow(2, this.state.offset_bits);
+           this.cacheMemory.Array[this.cacheMemory.currentIndex].buffer = `BLOCK ${decimo_string} WORD 0 - ${xblock - 1}`;
+           data.innerHTML = this.cacheMemory.Array[this.cacheMemory.currentIndex].buffer;
 
            getID(`memory_block_row${decimo_string}`).scrollIntoView();
            getID(`memory_block_row${decimo_string}`).style.backgroundColor = '#29b5f6a8';
+
 
            if (!Miss_or_Hit) {
             // Information
@@ -637,10 +685,12 @@ export default class MainContent extends Component {
             getID('information_text').style.backgroundColor = '#29b5f6a8';
            }
 
+
            soLanNext++;
            return;
           }
           if (soLanNext === 5) {
+
            getID('caption__tag').style.backgroundColor = 'transparent';
 
            // Chuỗi nhị phân của dòng đang chọn
@@ -726,8 +776,133 @@ export default class MainContent extends Component {
          }}>Next</button>
         </div>
         <div className='col-6'>
-         <button id='fast_button' type="button" className="btn btn-primary">Fast Forward</button>
+         <button id='fast_button' type="button" className="btn btn-primary" onClick={() => {
+          if(this.submit_part2 === 'chuanhan'){
+           alert('Please submit Instruction.');
+           return;
+          }
+          Miss_or_Hit = this.cacheMemory.missOrHit(getID('caption__tag').innerHTML);
+          // Lấy dòng trùng với cache index đang chọn trên giao diện
+          let data_ = this.PA_address.index;
+          data_ = Number(data_).toString(10).toString(2);
+          let current_row = getID(data_);
 
+          // Đánh dấu dòng nào đang chọn trong bộ nhớ cache_
+          let decimal = Number(parseInt(data_, 2));
+          this.cacheMemory.currentIndex = decimal;
+
+          // 4 cột trong cache table
+          let valid = current_row.querySelector('#Valid');
+          let tag = current_row.querySelector('#Tag');
+          let index = current_row.querySelector('#Index');
+          let data = current_row.querySelector('#Data');
+          let dirty = current_row.querySelector('#Dirty');
+
+          // Chuỗi nhị phân của dòng đang chọn
+          let binary_string = getID('caption__tag').innerHTML + getID('caption__index').innerHTML;
+          let decimo_string = parseInt(binary_string, 2);
+
+          setTimeout(() => {
+           getID(`memory_block_row${decimo_string}`).scrollIntoView();
+           console.log('1');
+          }, 0);
+          
+
+          // cache_
+          this.cacheMemory.Array[this.cacheMemory.currentIndex].valid = 1;
+          this.cacheMemory.Array[this.cacheMemory.currentIndex].tagbit = getID('caption__tag').innerHTML;
+          tag.innerHTML = this.cacheMemory.Array[this.cacheMemory.currentIndex].tagbit;
+          valid.innerHTML = this.cacheMemory.Array[this.cacheMemory.currentIndex].valid;
+
+          // cache_ 
+          let xblock = Math.pow(2, this.state.offset_bits);
+          this.cacheMemory.Array[this.cacheMemory.currentIndex].buffer = `BLOCK ${decimo_string} WORD 0 - ${xblock - 1}`;
+          data.innerHTML = this.cacheMemory.Array[this.cacheMemory.currentIndex].buffer;
+
+
+          getID('caption__tag').style.backgroundColor = 'transparent';
+          getID('caption__index').style.backgroundColor = 'transparent';
+          getID('caption__ofsset').style.backgroundColor = 'transparent';
+
+          index.style.backgroundColor = 'transparent';
+          valid.style.backgroundColor = 'transparent';
+          tag.style.backgroundColor = 'transparent';
+          data.style.backgroundColor = 'transparent';
+          dirty.style.backgroundColor = 'transparent';
+
+          // Cho dấu màu đỏ/xanh biến mất
+          valid.classList.remove('current_row_close');
+          valid.classList.remove('current_row_tick');
+
+          tag.classList.remove('current_row_close');
+          tag.classList.remove('current_row_tick');
+
+          index.classList.remove('Miss_After');
+          index.classList.remove('Hit_After');
+
+          // Xóa current_input và đẩy lên 1 input mới
+          let data_string = getID('instruction__data');
+          let input_string = getID('instruction__input');
+
+          let previous_input = input_string.value;
+
+          // next_current_input lấy từ data_string.value đến khi nào gặp dấu , thì dừng
+
+          let vt = -1;
+          for (let i = 0; i < data_string.value.length; i++) {
+           if (data_string.value[i] === ',') {
+            vt = i;
+            break;
+           }
+          }
+          if (vt === -1) {
+           input_string.value = data_string.value;
+           data_string.value = '';
+          } else {
+           input_string.value = data_string.value.slice(0, vt);
+           data_string.value = data_string.value.slice(vt + 1);
+
+          }
+
+          input_string.focus();
+
+          this.submit_part2 = 'chuanhan';
+          getID('submit_part2').disabled = false;
+
+          soLanNext = 0;
+
+          // Tính toán tỷ lệ miss hit
+          if (Miss_or_Hit === false) {
+           this.miss++;
+          } else {
+           this.hit++;
+          }
+
+          let miss_rate = this.miss / (this.miss + this.hit) * 100;
+
+          getID('missRateLabel').innerHTML = Math.round(miss_rate) + '%';
+          getID('hitRateLabel').innerHTML = (100 - Math.round(miss_rate)) + '%';
+
+          let x;
+          if (!Miss_or_Hit) {
+           x = 'Miss';
+          } else {
+           x = 'Hit';
+          }
+
+          getID('Status_Miss_hit').innerHTML += `<li>Load ${previous_input.toString().toUpperCase()} [${x}]</li>`;
+
+          // Tô màu tỷ lệ miss/hit
+          let color = document.getElementsByClassName('statistics')[0];
+          color.style.backgroundColor = '#FDD835';
+
+          // Information
+          getID('information_text').innerHTML = 'The cycle has been completed.Please submit another instructions';
+          getID('information_text').style.backgroundColor = 'transparent';
+          
+          Miss_or_Hit = true;
+          return;
+         }}>Fast Forward</button>
         </div>
        </div>
        <hr />
