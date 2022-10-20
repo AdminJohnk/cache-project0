@@ -554,7 +554,7 @@ export default class MainContent extends Component {
 
           if (soLanNext === 1) {
            valid.style.backgroundColor = '#29b5f6a8';
-           // if (valid.innerHTML === '0') {
+           /// if (valid.innerHTML === '0') {
            //  valid.classList.add('current_row_close');
            //  Miss_or_Hit = false;
            //  // Information
