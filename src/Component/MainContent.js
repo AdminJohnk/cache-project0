@@ -805,7 +805,7 @@ export default class MainContent extends Component {
           setTimeout(() => {
            getID(`memory_block_row${decimo_string}`).scrollIntoView();
            console.log('1');
-          }, 0);
+          }, 1);
           
 
           // cache_
