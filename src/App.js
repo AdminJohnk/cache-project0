@@ -5,7 +5,8 @@ export default class App extends Component {
   render() {
     return (
       <div>
-        <MainContent/>
+//         <MainContent/>
+      aaa
       </div>
     )
   }
